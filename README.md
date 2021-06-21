@@ -10,4 +10,4 @@
 5. Метод (GET) - Получать данные о количестве Email-адрессов в виде json;
 6. Метод (GET) - Делать поиск по Login - пользователя на GitHub;
 ---
-![Альтернативный текст](https://github.com/Crozen93/GitHub-Rest-API/blob/master/Picture/Project.jpg)
+![Альтернативный текст](https://github.com/Crozen93/GitHub-Rest-API/blob/master/Picture/Project2.jpg)
