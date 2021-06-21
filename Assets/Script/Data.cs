@@ -16,7 +16,7 @@ public class Data : MonoBehaviour
     [Header("URLs")]
     [SerializeField] private string userGitUrl;
     [SerializeField] private string usersGitUrl;
-    [SerializeField] private string appToken = "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";
+    [SerializeField] private string appToken;
 
     [Header("TMP")]
     [SerializeField] private TextMeshProUGUI loginText;
@@ -65,6 +65,7 @@ public class Data : MonoBehaviour
     
     private void Start()
     {
+        appToken = "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";
         //URL's
         userGitUrl = "https://api.github.com/user";
         usersGitUrl = "https://api.github.com/users/";
