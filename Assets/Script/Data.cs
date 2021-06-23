@@ -8,7 +8,7 @@ using TMPro;
 using SimpleJSON;
 
 
-public class Data : MonoBehaviour
+public class Data : MonoBehaviour, IGitHubApi
 {
     [SerializeField] private TextMeshProUGUI testResponsText; // Testing
 
@@ -51,6 +51,8 @@ public class Data : MonoBehaviour
     [SerializeField] private Button deleteDataButton;
     [SerializeField] private Button getEmailsDataButton;
 
+    [SerializeField] private Button getNewButton;
+
     [Header("UI panels")]
     [SerializeField] private GameObject patchPanel;
     [SerializeField] private GameObject posthPanel;
@@ -60,12 +62,13 @@ public class Data : MonoBehaviour
 
     [SerializeField] private Image avatarImage;
      private Texture2D imageTexture;
-    
 
-    
+    public JSONNode jsonData;
+    public string reqestJson;
+
     private void Start()
-    {
-        appToken = "" + "4"; // app token
+    {       
+        appToken = "ghp_tselPPNmQqftXt27zykQ035JmEDxIm3k7kB" + "Z"; // app token
 
         //URL's
         userGitUrl = "https://api.github.com/user";
@@ -75,18 +78,40 @@ public class Data : MonoBehaviour
         userSearchButton.onClick.AddListener(() => StartCoroutine(GetData_Curoutine(usersGitUrl + userSearchInputField.text)));
 
         //UI Buttons
-        showPatchPanelButton.onClick.AddListener(() => StartCoroutine(showPatchPanelHandler(userGitUrl)));
+        showPatchPanelButton.onClick.AddListener(() => StartCoroutine(showPatchPanelHandler()));
         showPostlButton.onClick.AddListener(()      => showPostPanelHandler());
         showDeleteButton.onClick.AddListener(()     => showDeletePanelHandler());
 
         //API method buttons
-        getButtonAuth.onClick.AddListener(()    => StartCoroutine(GetData_Curoutine(userGitUrl)));
-        patchDataButton.onClick.AddListener(()  => StartCoroutine(PatchData_Curoutine(userGitUrl)));
-        postDataButton.onClick.AddListener(()   => StartCoroutine(PostData_Curoutine(userGitUrl + "/emails")));
-        deleteDataButton.onClick.AddListener(() => StartCoroutine(Delete_Curoutine(userGitUrl + "/emails")));
-        getEmailsDataButton.onClick.AddListener(() => StartCoroutine(Get_Emails(userGitUrl + "/emails")));
+        getButtonAuth.onClick.AddListener(()    => StartCoroutine(GetData_Curoutine(userGitUrl)));               // API - GET METHOD (URL, json)
+        patchDataButton.onClick.AddListener(()  => StartCoroutine(ApiPatchData(userGitUrl, reqestJson)));       // API - PATCH METHOD (URL, json)
+        postDataButton.onClick.AddListener(()   => StartCoroutine(ApiPostData(userGitUrl + "/emails")));
+        deleteDataButton.onClick.AddListener(() => StartCoroutine(ApiDeleteData(userGitUrl + "/emails")));
+        getEmailsDataButton.onClick.AddListener(() => StartCoroutine(ApiGetData(userGitUrl + "/emails")));
 
+
+        getNewButton.onClick.AddListener(() => StartCoroutine(ApiGetData(userGitUrl)));
+
+        //Input Fields
+        nameInputField.onValueChanged.AddListener(delegate { ValueChangedHandler(); });
+        locationInputField.onValueChanged.AddListener(delegate { ValueChangedHandler(); });
+        emailInputField.onValueChanged.AddListener(delegate { ValueChangedHandler(); });
+        bioInputField.onValueChanged.AddListener(delegate { ValueChangedHandler(); });
     }
+
+    // Handler Change value in inputField
+    void ValueChangedHandler()
+    {
+        UserStruct patch = new UserStruct()
+        {
+            name = nameInputField.text,
+            location = locationInputField.text,
+            email = emailInputField.text,
+            bio = bioInputField.text
+        };
+        reqestJson = JsonUtility.ToJson(patch);
+    }
+
 
     //Update UI data
     void ShowUiData()
@@ -119,41 +144,23 @@ public class Data : MonoBehaviour
     }
 
     //show PATCH panel and import data for PATCH-panel UI
-    IEnumerator showPatchPanelHandler(string url)
-    {
-        UnityWebRequest request = UnityWebRequest.Get(url);
-        request.SetRequestHeader("Authorization", "token " + appToken);
-        request.SetRequestHeader("Accept", "application/vnd.github.v3+json");
+     IEnumerator showPatchPanelHandler()
+    {       
+        yield return StartCoroutine(ApiGetData(userGitUrl));
 
-        yield return request.SendWebRequest();
-        if (request.isDone)
-        {
-            JSONNode jsonData = JSON.Parse(System.Text.Encoding.UTF8.GetString(request.downloadHandler.data));
-
-            nameInputField.text = jsonData["name"];
-            locationInputField.text = jsonData["location"];
-            emailInputField.text = jsonData["email"];
-            bioInputField.text = jsonData["bio"];
-        }
+        nameInputField.text     = jsonData["name"];
+        locationInputField.text = jsonData["location"];
+        emailInputField.text    = jsonData["email"];
+        bioInputField.text      = jsonData["bio"];
 
         patchPanel.SetActive(true);
         posthPanel.SetActive(false);
         deletePanel.SetActive(false);
     }
 
-    //GET image
-    IEnumerator GetDataImage_Corutine(string url)
-    {
-        UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
-        yield return request.SendWebRequest();
-        if (request.isNetworkError || request.isHttpError)
-            Debug.Log(request.error);
-        else
-            imageTexture = ((DownloadHandlerTexture)request.downloadHandler).texture;
-        Sprite avatarSprite = Sprite.Create(imageTexture, new Rect(0.0f, 0.0f, imageTexture.width, imageTexture.height), new Vector2(0.5f, 0.5f), 100.0f);
-        avatarImage.GetComponent<Image>().sprite = avatarSprite;
-    }
+     
 
+    
     //GET DATA
     IEnumerator GetData_Curoutine(string url)
     {
@@ -175,7 +182,8 @@ public class Data : MonoBehaviour
             {
                 testResponsText.text = "Code status : " + request.responseCode.ToString();
 
-                JSONNode jsonData = JSON.Parse(System.Text.Encoding.UTF8.GetString(request.downloadHandler.data));           
+                jsonData = JSON.Parse(System.Text.Encoding.UTF8.GetString(request.downloadHandler.data));  
+                
                 userData.login = jsonData["login"];
                 userData.id = jsonData["id"];
                 userData.avatarTextureUrl = jsonData["avatar_url"];
@@ -188,7 +196,7 @@ public class Data : MonoBehaviour
                 userData.folowingCount = jsonData["following"];
 
 
-                StartCoroutine(GetDataImage_Corutine(jsonData["avatar_url"]));
+                StartCoroutine(ApiGetDataImage(jsonData["avatar_url"]));
                 ShowUiData();
                 
             }
@@ -198,20 +206,40 @@ public class Data : MonoBehaviour
 
     }
 
-    //PATCH DATA
-    IEnumerator PatchData_Curoutine(string url)
-    {
-        UserStruct patch = new UserStruct()
-        {
-            name = nameInputField.text,
-            location = locationInputField.text,
-            email = emailInputField.text,
-            bio = bioInputField.text
-        };
 
-        //parsing
-        string json = JsonUtility.ToJson(patch);
-        Debug.Log("json: " + json); //test
+
+
+
+    //Interafce realization
+    //New GET DATA
+    public IEnumerator ApiGetData(string url)
+    {
+        UnityWebRequest request = UnityWebRequest.Get(url);
+        request.SetRequestHeader("Authorization", "token " + appToken);
+        request.SetRequestHeader("Accept", "application/vnd.github.v3+json");
+        yield return request.SendWebRequest();
+
+        if (request.isNetworkError || request.isHttpError)
+        {
+            testResponsText.text = "Code status : " + request.error;
+        }
+        else
+        {
+            if (request.isDone)
+            {
+                jsonData = JSON.Parse(System.Text.Encoding.UTF8.GetString(request.downloadHandler.data));
+
+                emailsDataText.text = request.downloadHandler.text;
+                testResponsText.text = "Code status : " + request.responseCode.ToString(); //show server response code
+                Debug.Log("GET USER DATA" + request.downloadHandler.text); //test
+            }
+        }
+    }
+
+    //PATCH DATA
+    public IEnumerator ApiPatchData(string url, string json)
+    {
+
         byte[] postBytes = System.Text.Encoding.UTF8.GetBytes(json);
 
         //PATCH
@@ -226,14 +254,15 @@ public class Data : MonoBehaviour
         if (request.isDone)
         {
             testResponsText.text = "Code status : " + request.responseCode.ToString();
-            patchPanel.SetActive(false);
+            
         }
         Debug.Log("PATCH: " + request.downloadHandler.text); //test
 
+        patchPanel.SetActive(false);
     }
 
     //POST DATA
-    IEnumerator PostData_Curoutine(string url)
+    public IEnumerator ApiPostData(string url)
     {
         EmailStruct emaildData = new EmailStruct()
         {
@@ -265,7 +294,7 @@ public class Data : MonoBehaviour
     }
 
     //DELETE DATA
-    IEnumerator Delete_Curoutine(string url)
+    public IEnumerator ApiDeleteData(string url)
     {
         EmailStruct emaildData = new EmailStruct()
         {
@@ -296,28 +325,17 @@ public class Data : MonoBehaviour
         Debug.Log("DELETE: " + request.downloadHandler.text); //test
     }
 
-    //GET DATA Emails
-    IEnumerator Get_Emails(string url)
+    //GET image
+    public IEnumerator ApiGetDataImage(string url)
     {
-        UnityWebRequest request = UnityWebRequest.Get(url);
-        request.SetRequestHeader("Authorization", "token " + appToken);
-        request.SetRequestHeader("Accept", "application/vnd.github.v3+json");
-
+        UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
         yield return request.SendWebRequest();
-
         if (request.isNetworkError || request.isHttpError)
-        {
-            testResponsText.text = "Code status : " + request.error;
-        }
+            Debug.Log(request.error);
         else
-        {
-            if (request.isDone)
-            {
-                testResponsText.text = "Code status : " +  request.responseCode.ToString();
-                emailsDataText.text = request.downloadHandler.text;
-            }
-            Debug.Log("GETDATA EMAILS: " + request.downloadHandler.text); //test
-        }
+            imageTexture = ((DownloadHandlerTexture)request.downloadHandler).texture;
+        Sprite avatarSprite = Sprite.Create(imageTexture, new Rect(0.0f, 0.0f, imageTexture.width, imageTexture.height), new Vector2(0.5f, 0.5f), 100.0f);
+        avatarImage.GetComponent<Image>().sprite = avatarSprite;
     }
 
 
