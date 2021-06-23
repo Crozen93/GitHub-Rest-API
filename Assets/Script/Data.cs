@@ -65,7 +65,7 @@ public class Data : MonoBehaviour
     
     private void Start()
     {
-        appToken = "ghp_5R3ZM2TFD8nRlWq7nHekZmSCpy9Lly3QSpT" + "4";
+        appToken = "" + "4"; // app token
 
         //URL's
         userGitUrl = "https://api.github.com/user";
