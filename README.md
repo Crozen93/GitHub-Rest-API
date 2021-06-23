@@ -1,5 +1,5 @@
-# Test Task Rest Api GitHub
-## Тестовое задание: [Build](https://github.com/Crozen93/GitHub-Rest-API/blob/master/Build/Build.rar "Windows Build")
+# Rest Api GitHub
+## [Build](https://github.com/Crozen93/GitHub-Rest-API/blob/master/Build/Build.rar "Windows Build")
 #### Приложение для работы с GitHub Rest API.
 ##### В приложении реализованы 4 метода Rest API (GET, POST, PATCH, DELETE).
 ##### Приложение может: 
